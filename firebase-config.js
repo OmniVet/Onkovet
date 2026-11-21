@@ -14,4 +14,4 @@ window.FIREBASE_CONFIG = {
 
 // 2) E-mail(s) do(s) usuário(s) MASTER (acesso total: exportar histórico,
 //    excluir, gerenciar a equipe). Use o mesmo e-mail também em firestore.rules.
-window.MASTER_EMAILS = ["SEU_EMAIL_MASTER@gmail.com"];
+window.MASTER_EMAILS = ["vetplusespecialidades@gmail.com"];
