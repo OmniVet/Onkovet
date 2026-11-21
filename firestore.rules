@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- troque pelo(s) e-mail(s) master (os mesmos de firebase-config.js) ----
+    function isMaster() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['seu_email_master@gmail.com'];
+    }
+    // membro = master OU e-mail cadastrado em /users (tela Admin > Equipe)
+    function isMember() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && (isMaster()
+            || exists(/databases/$(database)/documents/users/$(request.auth.token.email.lower())));
+    }
+
+    // equipe autorizada
+    match /users/{email} {
+      allow get: if request.auth != null && request.auth.token.email.lower() == email;
+      allow list: if isMember();
+      allow write: if isMaster();
+    }
+
+    // dados clínicos: a equipe lê, cria e edita; só o master apaga
+    match /patients/{id}         { allow read, create, update: if isMember(); allow delete: if isMaster(); }
+    match /sessions/{id}         { allow read, create, update: if isMember(); allow delete: if isMaster(); }
+    match /therapies/{id}        { allow read, create, update: if isMember(); allow delete: if isMaster(); }
+    match /examRequests/{id}     { allow read, create, update: if isMember(); allow delete: if isMaster(); }
+
+    // bibliotecas (protocolos, apresentações, doses): equipe lê; master altera
+    match /protocols/{id}        { allow read: if isMember(); allow write: if isMaster(); }
+    match /therapyProtocols/{id} { allow read: if isMember(); allow write: if isMaster(); }
+    match /presentations/{id}    { allow read: if isMember(); allow write: if isMaster(); }
+    match /doseRefs/{id}         { allow read: if isMember(); allow write: if isMaster(); }
+    match /doses/{id}            { allow read: if isMember(); allow write: if isMaster(); }
+
+    // dados da clínica (cabeçalho das solicitações)
+    match /settings/{id}         { allow read: if isMember(); allow write: if isMaster(); }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
